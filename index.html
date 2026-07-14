@@ -1,0 +1,515 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Interactive Web Synth | Neon Audio Playground</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;600;800&family=Share+Tech+Mono&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg: #0a0a0c;
+      --card-bg: #121216;
+      --neon-cyan: #00f0ff;
+      --neon-purple: #bd00ff;
+      --text: #f3f4f6;
+      --text-muted: #9ca3af;
+      --glass-border: rgba(255, 255, 255, 0.05);
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      background-color: var(--bg);
+      color: var(--text);
+      font-family: 'Outfit', sans-serif;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      overflow-x: hidden;
+      background-image: 
+        radial-gradient(circle at 10% 20%, rgba(0, 240, 255, 0.15) 0%, transparent 40%),
+        radial-gradient(circle at 90% 80%, rgba(189, 0, 255, 0.1) 0%, transparent 45%);
+    }
+
+    .container {
+      width: 100%;
+      max-width: 800px;
+      padding: 2rem;
+      display: flex;
+      flex-direction: column;
+      gap: 2rem;
+    }
+
+    header {
+      text-align: center;
+    }
+
+    h1 {
+      font-size: 2.5rem;
+      font-weight: 800;
+      background: linear-gradient(45deg, var(--neon-cyan), var(--neon-purple));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      margin-bottom: 0.5rem;
+      text-transform: uppercase;
+      letter-spacing: 2px;
+    }
+
+    p {
+      color: var(--text-muted);
+      font-size: 1rem;
+    }
+
+    .synth-panel {
+      background: var(--card-bg);
+      border: 1px solid var(--glass-border);
+      border-radius: 16px;
+      padding: 2rem;
+      box-shadow: 0 20px 40px rgba(0, 0, 0, 0.5), inset 0 1px 0 rgba(255,255,255,0.05);
+      display: flex;
+      flex-direction: column;
+      gap: 2rem;
+    }
+
+    .controls-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 1.5rem;
+    }
+
+    .control-group {
+      background: rgba(0,0,0,0.2);
+      border: 1px solid var(--glass-border);
+      padding: 1.2rem;
+      border-radius: 12px;
+      display: flex;
+      flex-direction: column;
+      gap: 1rem;
+    }
+
+    .control-group h3 {
+      font-size: 0.9rem;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      color: var(--neon-cyan);
+      margin-bottom: 0.5rem;
+    }
+
+    /* Waveform selector */
+    .wave-selectors {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 0.5rem;
+    }
+
+    .wave-btn {
+      background: rgba(255,255,255,0.05);
+      border: 1px solid var(--glass-border);
+      color: var(--text);
+      padding: 0.5rem;
+      border-radius: 6px;
+      cursor: pointer;
+      font-weight: 600;
+      transition: all 0.3s;
+      font-size: 0.85rem;
+    }
+
+    .wave-btn.active {
+      background: linear-gradient(135deg, var(--neon-cyan), var(--neon-purple));
+      color: #000;
+      border-color: transparent;
+      box-shadow: 0 0 10px rgba(0,240,255,0.3);
+    }
+
+    /* Sliders */
+    .slider-container {
+      display: flex;
+      flex-direction: column;
+      gap: 0.3rem;
+    }
+
+    .slider-label {
+      display: flex;
+      justify-content: space-between;
+      font-size: 0.8rem;
+      color: var(--text-muted);
+    }
+
+    .slider-label span:last-child {
+      font-family: 'Share Tech Mono', monospace;
+      color: var(--neon-cyan);
+    }
+
+    input[type="range"] {
+      -webkit-appearance: none;
+      width: 100%;
+      height: 6px;
+      border-radius: 3px;
+      background: #222;
+      outline: none;
+    }
+
+    input[type="range"]::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      width: 16px;
+      height: 16px;
+      border-radius: 50%;
+      background: var(--neon-cyan);
+      cursor: pointer;
+      box-shadow: 0 0 8px var(--neon-cyan);
+      transition: background 0.3s;
+    }
+
+    input[type="range"]::-webkit-slider-thumb:hover {
+      background: #fff;
+    }
+
+    /* Visualizer */
+    .visualizer-container {
+      width: 100%;
+      height: 120px;
+      background: #000;
+      border-radius: 8px;
+      overflow: hidden;
+      border: 1px solid var(--glass-border);
+    }
+
+    canvas {
+      width: 100%;
+      height: 100%;
+      display: block;
+    }
+
+    /* Keyboard */
+    .keyboard {
+      display: flex;
+      justify-content: center;
+      position: relative;
+      background: #000;
+      padding: 1rem;
+      border-radius: 12px;
+      border: 1px solid var(--glass-border);
+    }
+
+    .key {
+      position: relative;
+      height: 180px;
+      flex: 1;
+      border-radius: 0 0 6px 6px;
+      cursor: pointer;
+      user-select: none;
+      transition: background-color 0.1s, transform 0.1s;
+    }
+
+    .white-key {
+      background: #fff;
+      border-right: 1px solid #ccc;
+      z-index: 1;
+    }
+
+    .white-key:hover {
+      background: #eaeaea;
+    }
+
+    .white-key.active {
+      background: var(--neon-cyan);
+      box-shadow: 0 0 15px var(--neon-cyan);
+      transform: scaleY(0.98);
+    }
+
+    .black-key {
+      background: #111;
+      height: 110px;
+      width: 6.5%;
+      margin-left: -3.25%;
+      margin-right: -3.25%;
+      z-index: 2;
+      border-radius: 0 0 4px 4px;
+      border: 1px solid #000;
+    }
+
+    .black-key:hover {
+      background: #222;
+    }
+
+    .black-key.active {
+      background: var(--neon-purple);
+      box-shadow: 0 0 15px var(--neon-purple);
+      transform: scaleY(0.98);
+    }
+
+    .instructions {
+      text-align: center;
+      font-size: 0.85rem;
+      color: var(--text-muted);
+      font-family: 'Share Tech Mono', monospace;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="container">
+    <header>
+      <h1>Interactive Web Synth</h1>
+      <p>Синтезатор в браузере на базе Web Audio API</p>
+    </header>
+
+    <div class="synth-panel">
+      <div class="controls-grid">
+        <div class="control-group">
+          <h3>Осциллятор</h3>
+          <div class="wave-selectors">
+            <button class="wave-btn active" data-wave="sine">Sine</button>
+            <button class="wave-btn" data-wave="square">Square</button>
+            <button class="wave-btn" data-wave="sawtooth">Sawtooth</button>
+            <button class="wave-btn" data-wave="triangle">Triangle</button>
+          </div>
+        </div>
+
+        <div class="control-group">
+          <h3>Огибающая (ADSR)</h3>
+          <div class="slider-container">
+            <div class="slider-label"><span>Attack</span><span id="attack-val">0.1s</span></div>
+            <input type="range" id="attack" min="0.01" max="2" step="0.05" value="0.1">
+          </div>
+          <div class="slider-container">
+            <div class="slider-label"><span>Release</span><span id="release-val">0.5s</span></div>
+            <input type="range" id="release" min="0.01" max="3" step="0.05" value="0.5">
+          </div>
+        </div>
+
+        <div class="control-group">
+          <h3>Громкость</h3>
+          <div class="slider-container">
+            <div class="slider-label"><span>Volume</span><span id="volume-val">70%</span></div>
+            <input type="range" id="volume" min="0" max="100" value="70">
+          </div>
+        </div>
+      </div>
+
+      <div class="visualizer-container">
+        <canvas id="visualizer"></canvas>
+      </div>
+
+      <div class="keyboard">
+        <div class="key white-key" data-note="261.63" data-key="a"></div>
+        <div class="key black-key" data-note="277.18" data-key="w"></div>
+        <div class="key white-key" data-note="293.66" data-key="s"></div>
+        <div class="key black-key" data-note="311.13" data-key="e"></div>
+        <div class="key white-key" data-note="329.63" data-key="d"></div>
+        <div class="key white-key" data-note="349.23" data-key="f"></div>
+        <div class="key black-key" data-note="369.99" data-key="t"></div>
+        <div class="key white-key" data-note="392.00" data-key="g"></div>
+        <div class="key black-key" data-note="415.30" data-key="y"></div>
+        <div class="key white-key" data-note="440.00" data-key="h"></div>
+        <div class="key black-key" data-note="466.16" data-key="u"></div>
+        <div class="key white-key" data-note="493.88" data-key="j"></div>
+        <div class="key white-key" data-note="523.25" data-key="k"></div>
+      </div>
+
+      <div class="instructions">
+        Используйте мышь или клавиши клавиатуры: A W S E D F T G Y H U J K
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    
+    // Config
+    let waveType = 'sine';
+    let attackTime = 0.1;
+    let releaseTime = 0.5;
+    let mainVolume = 0.7;
+
+    // Active nodes tracking
+    const activeOscillators = {};
+
+    // Elements
+    const attackSlider = document.getElementById('attack');
+    const attackVal = document.getElementById('attack-val');
+    const releaseSlider = document.getElementById('release');
+    const releaseVal = document.getElementById('release-val');
+    const volumeSlider = document.getElementById('volume');
+    const volumeVal = document.getElementById('volume-val');
+    const waveButtons = document.querySelectorAll('.wave-btn');
+    const keys = document.querySelectorAll('.key');
+
+    // Visualizer Setup
+    const canvas = document.getElementById('visualizer');
+    const canvasCtx = canvas.getContext('2d');
+    const analyser = audioCtx.createAnalyser();
+    analyser.fftSize = 254;
+    const bufferLength = analyser.frequencyBinCount;
+    const dataArray = new Uint8Array(bufferLength);
+
+    // Event Listeners for Controls
+    waveButtons.forEach(btn => {
+      btn.addEventListener('click', (e) => {
+        waveButtons.forEach(b => b.classList.remove('active'));
+        e.target.classList.add('active');
+        waveType = e.target.getAttribute('data-wave');
+      });
+    });
+
+    attackSlider.addEventListener('input', (e) => {
+      attackTime = parseFloat(e.target.value);
+      attackVal.textContent = attackTime + 's';
+    });
+
+    releaseSlider.addEventListener('input', (e) => {
+      releaseTime = parseFloat(e.target.value);
+      releaseVal.textContent = releaseTime + 's';
+    });
+
+    volumeSlider.addEventListener('input', (e) => {
+      mainVolume = parseInt(e.target.value) / 100;
+      volumeVal.textContent = e.target.value + '%';
+    });
+
+    // Sound generation
+    function playNote(frequency) {
+      if (audioCtx.state === 'suspended') {
+        audioCtx.resume();
+      }
+
+      // Stop existing if any
+      if (activeOscillators[frequency]) {
+        stopNote(frequency);
+      }
+
+      const osc = audioCtx.createOscillator();
+      const gainNode = audioCtx.createGain();
+
+      osc.type = waveType;
+      osc.frequency.setValueAtTime(frequency, audioCtx.currentTime);
+
+      gainNode.gain.setValueAtTime(0, audioCtx.currentTime);
+      gainNode.gain.linearRampToValueAtTime(mainVolume, audioCtx.currentTime + attackTime);
+
+      osc.connect(gainNode);
+      gainNode.connect(analyser);
+      analyser.connect(audioCtx.destination);
+
+      osc.start();
+
+      activeOscillators[frequency] = { osc, gainNode };
+    }
+
+    function stopNote(frequency) {
+      const active = activeOscillators[frequency];
+      if (active) {
+        const { osc, gainNode } = active;
+        const now = audioCtx.currentTime;
+        gainNode.gain.cancelScheduledValues(now);
+        gainNode.gain.setValueAtTime(gainNode.gain.value, now);
+        gainNode.gain.exponentialRampToValueAtTime(0.0001, now + releaseTime);
+        osc.stop(now + releaseTime);
+        delete activeOscillators[frequency];
+      }
+    }
+
+    // Keyboard trigger bindings
+    const keyMap = {
+      'a': keys[0],
+      'w': keys[1],
+      's': keys[2],
+      'e': keys[3],
+      'd': keys[4],
+      'f': keys[5],
+      't': keys[6],
+      'g': keys[7],
+      'y': keys[8],
+      'h': keys[9],
+      'u': keys[10],
+      'j': keys[11],
+      'k': keys[12]
+    };
+
+    // Mouse / Touch handlers
+    keys.forEach(key => {
+      const freq = parseFloat(key.getAttribute('data-note'));
+      
+      key.addEventListener('mousedown', () => {
+        key.classList.add('active');
+        playNote(freq);
+      });
+
+      key.addEventListener('mouseup', () => {
+        key.classList.remove('active');
+        stopNote(freq);
+      });
+
+      key.addEventListener('mouseleave', () => {
+        key.classList.remove('active');
+        stopNote(freq);
+      });
+    });
+
+    // Physical Keyboard Handlers
+    window.addEventListener('keydown', (e) => {
+      const keyEl = keyMap[e.key.toLowerCase()];
+      if (keyEl && !keyEl.classList.contains('active')) {
+        keyEl.classList.add('active');
+        playNote(parseFloat(keyEl.getAttribute('data-note')));
+      }
+    });
+
+    window.addEventListener('keyup', (e) => {
+      const keyEl = keyMap[e.key.toLowerCase()];
+      if (keyEl) {
+        keyEl.classList.remove('active');
+        stopNote(parseFloat(keyEl.getAttribute('data-note')));
+      }
+    });
+
+    // Draw visualizer
+    function resizeCanvas() {
+      canvas.width = canvas.parentElement.clientWidth;
+      canvas.height = canvas.parentElement.clientHeight;
+    }
+    window.addEventListener('resize', resizeCanvas);
+    resizeCanvas();
+
+    function draw() {
+      requestAnimationFrame(draw);
+      analyser.getByteTimeDomainData(dataArray);
+
+      canvasCtx.fillStyle = '#121216';
+      canvasCtx.fillRect(0, 0, canvas.width, canvas.height);
+
+      canvasCtx.lineWidth = 2;
+      canvasCtx.strokeStyle = '#00f0ff';
+      canvasCtx.beginPath();
+
+      const sliceWidth = canvas.width / bufferLength;
+      let x = 0;
+
+      for (let i = 0; i < bufferLength; i++) {
+        const v = dataArray[i] / 128.0;
+        const y = v * (canvas.height / 2);
+
+        if (i === 0) {
+          canvasCtx.moveTo(x, y);
+        } else {
+          canvasCtx.lineTo(x, y);
+        }
+
+        x += sliceWidth;
+      }
+
+      canvasCtx.lineTo(canvas.width, canvas.height / 2);
+      canvasCtx.stroke();
+    }
+    draw();
+  </script>
+</body>
+</html>
