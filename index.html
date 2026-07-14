@@ -3,96 +3,213 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Interactive Web Synth | Advanced Neon Sound Lab</title>
+  <title>CyberSynth Lab | Responsive Audio Playground</title>
+  <script src="https://cdn.tailwindcss.com"></script>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;600;800&family=Share+Tech+Mono&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="style.css">
-  <script src="app.js" defer></script>
-</head>
-<body>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;600;800&family=Inter:wght@400;600&family=Share+Tech+Mono&display=swap" rel="stylesheet">
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: {
+            display: ['Outfit', 'sans-serif'],
+            sans: ['Inter', 'sans-serif'],
+            mono: ['Share Tech Mono', 'monospace'],
+          },
+          colors: {
+            brand: {
+              black: '#07080e',
+              dark: '#0e111d',
+              card: '#161b2e',
+              accent: '#00f5d4', // Neon Teal
+              purple: '#7b2cbf',
+              pink: '#ff007f',
+            }
+          }
+        }
+      }
+    }
+  </script>
+  <style>
+    /* Layered radial gradients and grain texture */
+    .bg-synth-grid {
+      background-color: var(--bg);
+      background-image: 
+        radial-gradient(circle at 10% 20%, rgba(0, 245, 212, 0.08) 0%, transparent 40%),
+        radial-gradient(circle at 90% 80%, rgba(255, 0, 127, 0.05) 0%, transparent 45%);
+    }
 
-  <div class="container">
-    <header>
+    /* Spring-style easing for transform & opacity only */
+    .key-transition {
+      transition: transform 0.1s cubic-bezier(0.25, 0.8, 0.25, 1), opacity 0.1s cubic-bezier(0.25, 0.8, 0.25, 1);
+    }
+    
+    .dial-transition {
+      transition: transform 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    }
+
+    /* Custom slider styling without transition-all */
+    input[type="range"] {
+      -webkit-appearance: none;
+      width: 100%;
+      height: 4px;
+      border-radius: 2px;
+      background: #07080e;
+      outline: none;
+    }
+
+    input[type="range"]::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      width: 12px;
+      height: 18px;
+      border-radius: 2px;
+      background: #fff;
+      border-left: 2px solid #00f5d4;
+      border-right: 2px solid #00f5d4;
+      cursor: pointer;
+      box-shadow: 0 0 10px rgba(0, 245, 212, 0.6);
+    }
+
+    /* Custom depth system styles */
+    .depth-base {
+      box-shadow: inset 0 2px 4px rgba(0,0,0,0.8);
+    }
+    .depth-elevated {
+      box-shadow: 0 4px 20px rgba(0,0,0,0.4), inset 0 1px 0 rgba(255,255,255,0.05);
+    }
+    .depth-floating {
+      box-shadow: 0 10px 30px rgba(0,245,212,0.15), 0 1px 0 rgba(255,255,255,0.1);
+    }
+  </style>
+</head>
+<body class="bg-brand-black text-slate-200 min-height-screen flex flex-col items-center justify-center overflow-hidden bg-synth-grid relative">
+
+  <!-- SVG Noise Filter for Grain/Texture -->
+  <svg class="absolute inset-0 w-full h-full opacity-[0.015] pointer-events-none z-50" xmlns="http://www.w3.org/2000/svg">
+    <filter id="noiseFilter">
+      <feTurbulence type="fractalNoise" baseFrequency="0.65" numOctaves="3" stitchTiles="stitch"/>
+    </filter>
+    <rect width="100%" height="100%" filter="url(#noiseFilter)"/>
+  </svg>
+
+  <div class="w-full h-screen p-4 flex flex-col gap-4 box-border max-w-[1100px]">
+    <header class="flex justify-between items-center border-b-2 border-brand-accent/20 pb-2 flex-shrink-0">
       <div>
-        <h1>Web Synth Lab</h1>
-        <p>Интерактивная модульная аудио-лаборатория</p>
+        <h1 class="font-display text-2xl font-extrabold tracking-[-0.03em] uppercase bg-gradient-to-r from-brand-accent to-brand-pink bg-clip-text text-transparent">CyberSynth Lab</h1>
+        <p class="font-mono text-xs text-brand-accent tracking-widest uppercase">Аналоговый ИИ-Синтезатор</p>
       </div>
-      <div class="preset-selector">
-        <button class="preset-btn active" data-preset="space">Space Lead</button>
-        <button class="preset-btn" data-preset="bass">Fat Bass</button>
-        <button class="preset-btn" data-preset="retro">Retro Game</button>
+      <div class="preset-selector flex gap-2">
+        <button class="preset-btn font-mono text-xs px-4 py-1.5 rounded bg-brand-card/50 text-slate-400 border border-white/5 hover:text-white hover:border-brand-accent/50 key-transition active" data-preset="space">Space Lead</button>
+        <button class="preset-btn font-mono text-xs px-4 py-1.5 rounded bg-brand-card/50 text-slate-400 border border-white/5 hover:text-white hover:border-brand-accent/50 key-transition" data-preset="bass">Fat Bass</button>
+        <button class="preset-btn font-mono text-xs px-4 py-1.5 rounded bg-brand-card/50 text-slate-400 border border-white/5 hover:text-white hover:border-brand-accent/50 key-transition" data-preset="retro">Retro Game</button>
       </div>
     </header>
 
-    <div class="synth-panel">
-      <div class="controls-layout">
+    <div class="synth-panel bg-brand-dark border border-white/5 rounded-xl p-4 flex flex-col gap-4 flex-grow h-[calc(100%-80px)] overflow-hidden depth-elevated relative">
+      <div class="controls-layout grid grid-cols-1 md:grid-cols-5 gap-4 flex-grow min-h-0 overflow-y-auto pr-1">
         
-        <div class="left-column">
-          <div class="control-group">
-            <h3>Осциллятор</h3>
-            <div class="wave-selectors">
-              <button class="wave-btn active" data-wave="sine">Sine</button>
-              <button class="wave-btn" data-wave="square">Square</button>
-              <button class="wave-btn" data-wave="sawtooth">Saw</button>
-              <button class="wave-btn" data-wave="triangle">Tri</button>
+        <!-- Left Section (Oscillator & Visualizer) -->
+        <div class="md:col-span-2 flex flex-col gap-4">
+          <!-- Oscillator Module -->
+          <div class="bg-brand-card border-t-3 border-brand-accent rounded-lg p-4 flex flex-col gap-3 depth-elevated">
+            <h3 class="font-mono text-xs tracking-wider text-brand-accent border-b border-white/5 pb-1">Осциллятор</h3>
+            <div class="wave-selectors grid grid-cols-4 gap-1">
+              <button class="wave-btn active font-mono text-[10px] py-1.5 rounded bg-brand-black/50 text-slate-400 border border-white/5 hover:text-white hover:bg-white/5 key-transition" data-wave="sine">Sine</button>
+              <button class="wave-btn font-mono text-[10px] py-1.5 rounded bg-brand-black/50 text-slate-400 border border-white/5 hover:text-white hover:bg-white/5 key-transition" data-wave="square">Square</button>
+              <button class="wave-btn font-mono text-[10px] py-1.5 rounded bg-brand-black/50 text-slate-400 border border-white/5 hover:text-white hover:bg-white/5 key-transition" data-wave="sawtooth">Saw</button>
+              <button class="wave-btn font-mono text-[10px] py-1.5 rounded bg-brand-black/50 text-slate-400 border border-white/5 hover:text-white hover:bg-white/5 key-transition" data-wave="triangle">Tri</button>
             </div>
-            <div class="slider-container">
-              <div class="slider-label"><span>Громкость</span><span id="volume-val">60%</span></div>
-              <input type="range" id="volume" min="0" max="100" value="60">
+            <div class="slider-container flex flex-col gap-1">
+              <div class="slider-label flex justify-between text-[11px] text-slate-400 uppercase">
+                <span>Громкость</span>
+                <span id="volume-val" class="font-mono text-brand-accent">60%</span>
+              </div>
+              <input type="range" id="volume" min="0" max="100" value="60" class="focus:ring-1 focus:ring-brand-accent">
             </div>
           </div>
 
-          <div class="visualizer-container">
-            <canvas id="visualizer"></canvas>
+          <!-- Visualizer -->
+          <div class="visualizer-container flex-grow h-[220px] bg-brand-black rounded-lg border-2 border-brand-card overflow-hidden relative depth-base">
+            <div class="absolute inset-0 bg-[linear-gradient(rgba(18,16,16,0)_50%,rgba(0,0,0,0.25)_50%)] bg-[length:100%_4px] pointer-events-none z-10"></div>
+            <canvas id="visualizer" class="w-full h-full block"></canvas>
           </div>
         </div>
 
-        <div class="right-column">
-          <div class="control-group">
-            <h3>Фильтр (Lowpass)</h3>
-            <div class="slider-container">
-              <div class="slider-label"><span>Частота среза</span><span id="cutoff-val">2000 Hz</span></div>
+        <!-- Right Section (Modifiers & Effects) -->
+        <div class="md:col-span-3 grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <!-- Filter Module -->
+          <div class="bg-brand-card border-t-3 border-brand-accent rounded-lg p-4 flex flex-col gap-3 depth-elevated">
+            <h3 class="font-mono text-xs tracking-wider text-brand-accent border-b border-white/5 pb-1">Фильтр (Lowpass)</h3>
+            <div class="slider-container flex flex-col gap-1">
+              <div class="slider-label flex justify-between text-[11px] text-slate-400 uppercase">
+                <span>Частота</span>
+                <span id="cutoff-val" class="font-mono text-brand-accent">2000 Hz</span>
+              </div>
               <input type="range" id="cutoff" min="100" max="10000" step="50" value="2000">
             </div>
-            <div class="slider-container">
-              <div class="slider-label"><span>Резонанс (Q)</span><span id="resonance-val">1.0</span></div>
+            <div class="slider-container flex flex-col gap-1">
+              <div class="slider-label flex justify-between text-[11px] text-slate-400 uppercase">
+                <span>Резонанс (Q)</span>
+                <span id="resonance-val" class="font-mono text-brand-accent">1.0</span>
+              </div>
               <input type="range" id="resonance" min="0.1" max="15" step="0.1" value="1.0">
             </div>
           </div>
 
-          <div class="control-group">
-            <h3>Эффект Delay (Эхо)</h3>
-            <div class="slider-container">
-              <div class="slider-label"><span>Время задержки</span><span id="delay-time-val">0.3s</span></div>
+          <!-- Delay Module -->
+          <div class="bg-brand-card border-t-3 border-brand-pink rounded-lg p-4 flex flex-col gap-3 depth-elevated">
+            <h3 class="font-mono text-xs tracking-wider text-brand-pink border-b border-white/5 pb-1">Эффект Delay</h3>
+            <div class="slider-container flex flex-col gap-1">
+              <div class="slider-label flex justify-between text-[11px] text-slate-400 uppercase">
+                <span>Время</span>
+                <span id="delay-time-val" class="font-mono text-brand-pink">0.3s</span>
+              </div>
               <input type="range" id="delay-time" min="0" max="1" step="0.05" value="0.3">
             </div>
-            <div class="slider-container">
-              <div class="slider-label"><span>Обратная связь</span><span id="delay-feedback-val">40%</span></div>
+            <div class="slider-container flex flex-col gap-1">
+              <div class="slider-label flex justify-between text-[11px] text-slate-400 uppercase">
+                <span>Фидбек</span>
+                <span id="delay-feedback-val" class="font-mono text-brand-pink">40%</span>
+              </div>
               <input type="range" id="delay-feedback" min="0" max="95" value="40">
             </div>
           </div>
 
-          <div class="control-group">
-            <h3>Огибающая (ADSR)</h3>
-            <div class="slider-container">
-              <div class="slider-label"><span>Атака (Attack)</span><span id="attack-val">0.10s</span></div>
+          <!-- ADSR Module -->
+          <div class="bg-brand-card border-t-3 border-brand-purple rounded-lg p-4 flex flex-col gap-3 depth-elevated">
+            <h3 class="font-mono text-xs tracking-wider text-brand-purple border-b border-white/5 pb-1">Огибающая (ADSR)</h3>
+            <div class="slider-container flex flex-col gap-1">
+              <div class="slider-label flex justify-between text-[11px] text-slate-400 uppercase">
+                <span>Атака</span>
+                <span id="attack-val" class="font-mono text-brand-purple">0.10s</span>
+              </div>
               <input type="range" id="attack" min="0.01" max="1.5" step="0.05" value="0.10">
             </div>
-            <div class="slider-container">
-              <div class="slider-label"><span>Затухание (Release)</span><span id="release-val">0.60s</span></div>
+            <div class="slider-container flex flex-col gap-1">
+              <div class="slider-label flex justify-between text-[11px] text-slate-400 uppercase">
+                <span>Затухание</span>
+                <span id="release-val" class="font-mono text-brand-purple">0.60s</span>
+              </div>
               <input type="range" id="release" min="0.01" max="2.5" step="0.05" value="0.60">
             </div>
           </div>
 
-          <div class="control-group">
-            <h3>Модуляция (LFO)</h3>
-            <div class="slider-container">
-              <div class="slider-label"><span>Скорость (Rate)</span><span id="lfo-rate-val">4.0 Hz</span></div>
+          <!-- LFO Module -->
+          <div class="bg-brand-card border-t-3 border-brand-accent rounded-lg p-4 flex flex-col gap-3 depth-elevated">
+            <h3 class="font-mono text-xs tracking-wider text-brand-accent border-b border-white/5 pb-1">Модуляция (LFO)</h3>
+            <div class="slider-container flex flex-col gap-1">
+              <div class="slider-label flex justify-between text-[11px] text-slate-400 uppercase">
+                <span>Частота</span>
+                <span id="lfo-rate-val" class="font-mono text-brand-accent">4.0 Hz</span>
+              </div>
               <input type="range" id="lfo-rate" min="0.5" max="20" step="0.5" value="4.0">
             </div>
-            <div class="slider-container">
-              <div class="slider-label"><span>Глубина (Depth)</span><span id="lfo-depth-val">300</span></div>
+            <div class="slider-container flex flex-col gap-1">
+              <div class="slider-label flex justify-between text-[11px] text-slate-400 uppercase">
+                <span>Глубина</span>
+                <span id="lfo-depth-val" class="font-mono text-brand-accent">300</span>
+              </div>
               <input type="range" id="lfo-depth" min="0" max="1000" step="50" value="300">
             </div>
           </div>
@@ -100,30 +217,34 @@
 
       </div>
 
-      <div class="keyboard-container">
-        <div class="keyboard">
-          <div class="key white-key" data-note="261.63" data-key="a"></div>
-          <div class="key white-key" data-note="293.66" data-key="s"></div>
-          <div class="key white-key" data-note="329.63" data-key="d"></div>
-          <div class="key white-key" data-note="349.23" data-key="f"></div>
-          <div class="key white-key" data-note="392.00" data-key="g"></div>
-          <div class="key white-key" data-note="440.00" data-key="h"></div>
-          <div class="key white-key" data-note="493.88" data-key="j"></div>
-          <div class="key white-key" data-note="523.25" data-key="k"></div>
+      <!-- Keyboard Container -->
+      <div class="keyboard-container bg-brand-black p-3 rounded-lg border border-white/5 h-[150px] relative depth-base flex-shrink-0">
+        <div class="keyboard flex w-full h-full relative">
+          <!-- White Keys -->
+          <div class="key white-key flex-1 bg-gradient-to-b from-white to-slate-200 border-r border-slate-400 rounded-b shadow-[inset_0_2px_3px_#fff,0_4px_5px_rgba(0,0,0,0.3)] key-transition z-10 active:from-brand-accent active:to-teal-600 active:shadow-[0_0_15px_#00f5d4]" data-note="261.63" data-key="a"></div>
+          <div class="key white-key flex-1 bg-gradient-to-b from-white to-slate-200 border-r border-slate-400 rounded-b shadow-[inset_0_2px_3px_#fff,0_4px_5px_rgba(0,0,0,0.3)] key-transition z-10 active:from-brand-accent active:to-teal-600 active:shadow-[0_0_15px_#00f5d4]" data-note="293.66" data-key="s"></div>
+          <div class="key white-key flex-1 bg-gradient-to-b from-white to-slate-200 border-r border-slate-400 rounded-b shadow-[inset_0_2px_3px_#fff,0_4px_5px_rgba(0,0,0,0.3)] key-transition z-10 active:from-brand-accent active:to-teal-600 active:shadow-[0_0_15px_#00f5d4]" data-note="329.63" data-key="d"></div>
+          <div class="key white-key flex-1 bg-gradient-to-b from-white to-slate-200 border-r border-slate-400 rounded-b shadow-[inset_0_2px_3px_#fff,0_4px_5px_rgba(0,0,0,0.3)] key-transition z-10 active:from-brand-accent active:to-teal-600 active:shadow-[0_0_15px_#00f5d4]" data-note="349.23" data-key="f"></div>
+          <div class="key white-key flex-1 bg-gradient-to-b from-white to-slate-200 border-r border-slate-400 rounded-b shadow-[inset_0_2px_3px_#fff,0_4px_5px_rgba(0,0,0,0.3)] key-transition z-10 active:from-brand-accent active:to-teal-600 active:shadow-[0_0_15px_#00f5d4]" data-note="392.00" data-key="g"></div>
+          <div class="key white-key flex-1 bg-gradient-to-b from-white to-slate-200 border-r border-slate-400 rounded-b shadow-[inset_0_2px_3px_#fff,0_4px_5px_rgba(0,0,0,0.3)] key-transition z-10 active:from-brand-accent active:to-teal-600 active:shadow-[0_0_15px_#00f5d4]" data-note="440.00" data-key="h"></div>
+          <div class="key white-key flex-1 bg-gradient-to-b from-white to-slate-200 border-r border-slate-400 rounded-b shadow-[inset_0_2px_3px_#fff,0_4px_5px_rgba(0,0,0,0.3)] key-transition z-10 active:from-brand-accent active:to-teal-600 active:shadow-[0_0_15px_#00f5d4]" data-note="493.88" data-key="j"></div>
+          <div class="key white-key flex-1 bg-gradient-to-b from-white to-slate-200 rounded-b shadow-[inset_0_2px_3px_#fff,0_4px_5px_rgba(0,0,0,0.3)] key-transition z-10 active:from-brand-accent active:to-teal-600 active:shadow-[0_0_15px_#00f5d4]" data-note="523.25" data-key="k"></div>
 
-          <div class="key black-key k-db" data-note="277.18" data-key="w"></div>
-          <div class="key black-key k-eb" data-note="311.13" data-key="e"></div>
-          <div class="key black-key k-gb" data-note="369.99" data-key="t"></div>
-          <div class="key black-key k-ab" data-note="415.30" data-key="y"></div>
-          <div class="key black-key k-bb" data-note="466.16" data-key="u"></div>
+          <!-- Black Keys -->
+          <div class="key black-key absolute bg-gradient-to-b from-neutral-800 to-black h-[60%] w-[5.5%] rounded-b border border-black shadow-[0_3px_5px_rgba(0,0,0,0.4),inset_0_1px_1px_rgba(255,255,255,0.15)] key-transition z-20 left-[8.5%] active:from-brand-pink active:to-pink-700 active:shadow-[0_0_15px_#ff007f]" data-note="277.18" data-key="w"></div>
+          <div class="key black-key absolute bg-gradient-to-b from-neutral-800 to-black h-[60%] w-[5.5%] rounded-b border border-black shadow-[0_3px_5px_rgba(0,0,0,0.4),inset_0_1px_1px_rgba(255,255,255,0.15)] key-transition z-20 left-[21%] active:from-brand-pink active:to-pink-700 active:shadow-[0_0_15px_#ff007f]" data-note="311.13" data-key="e"></div>
+          <div class="key black-key absolute bg-gradient-to-b from-neutral-800 to-black h-[60%] w-[5.5%] rounded-b border border-black shadow-[0_3px_5px_rgba(0,0,0,0.4),inset_0_1px_1px_rgba(255,255,255,0.15)] key-transition z-20 left-[47.5%] active:from-brand-pink active:to-pink-700 active:shadow-[0_0_15px_#ff007f]" data-note="369.99" data-key="t"></div>
+          <div class="key black-key absolute bg-gradient-to-b from-neutral-800 to-black h-[60%] w-[5.5%] rounded-b border border-black shadow-[0_3px_5px_rgba(0,0,0,0.4),inset_0_1px_1px_rgba(255,255,255,0.15)] key-transition z-20 left-[60%] active:from-brand-pink active:to-pink-700 active:shadow-[0_0_15px_#ff007f]" data-note="415.30" data-key="y"></div>
+          <div class="key black-key absolute bg-gradient-to-b from-neutral-800 to-black h-[60%] w-[5.5%] rounded-b border border-black shadow-[0_3px_5px_rgba(0,0,0,0.4),inset_0_1px_1px_rgba(255,255,255,0.15)] key-transition z-20 left-[72.5%] active:from-brand-pink active:to-pink-700 active:shadow-[0_0_15px_#ff007f]" data-note="466.16" data-key="u"></div>
         </div>
       </div>
 
-      <div class="instructions">
+      <div class="instructions text-center text-xs text-slate-500 font-mono tracking-wider">
         Клавиши: A W S E D F T G Y H U J K
       </div>
     </div>
   </div>
 
+  <script src="app.js" defer></script>
 </body>
 </html>
